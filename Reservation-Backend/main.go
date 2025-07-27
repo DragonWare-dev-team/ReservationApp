@@ -6,6 +6,8 @@ import (
 	"net/http"
 )
 
+//handlers
+
 func itsrunninhhandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Hello, nigga!")
 }
@@ -15,6 +17,28 @@ func getReservationsHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(reservation)
 }
 
+func addReservstionHandler(w http.ResponseWriter, r *http.Request) {
+
+	if r.Method != http.MethodPost {
+		http.Error(w, "This is the post route nigga", http.StatusMethodNotAllowed)
+		return
+	}
+
+	err := json.NewDecode(r.body).Decode(&newReservation)
+
+	if err != nil {
+		http.Error(w, "Invalid json data", http.StatusBadRequest)
+		return
+	}
+
+	reservation = append(reservation, newReservation)
+
+	w.WriteHeader(http.StatusCreated)
+
+	json.NewEncoder(w).Encode(newReservation)
+}
+
+// vars
 type Reservation struct {
 	Name string `json:"name"`
 	Time string `json:"time"`
@@ -22,6 +46,7 @@ type Reservation struct {
 
 var reservation = []Reservation{{Name: "Nigga", Time: "69PM"}}
 
+// main func
 func main() {
 	fmt.Println("Starting server on localhost:8080")
 	http.HandleFunc("/hello", itsrunninhhandler)
