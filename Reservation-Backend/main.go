@@ -17,6 +17,39 @@ func getReservationsHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(reservation)
 }
 
+func deleteReservationHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodDelete {
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
+	}
+
+	nameToDelete := r.URL.Query().Get("name")
+	if nameToDelete == "" {
+		http.Error(w, "Missing name in query", http.StatusBadRequest)
+		return
+	}
+
+	found := false
+	newList := []Reservation{}
+
+	for _, res := range reservation {
+		if res.Name != nameToDelete {
+			newList = append(newList, res)
+		} else {
+			found = true
+		}
+	}
+
+	if !found {
+		http.Error(w, "Reservation not found", http.StatusNotFound)
+		return
+	}
+
+	reservation = newList
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprintf(w, "Deleted reservation for %s", nameToDelete)
+}
+
 func addReservstionHandler(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method != http.MethodPost {
@@ -24,7 +57,9 @@ func addReservstionHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := json.NewDecode(r.body).Decode(&newReservation)
+	var newReservation Reservation
+
+	err := json.NewDecoder(r.Body).Decode(&newReservation)
 
 	if err != nil {
 		http.Error(w, "Invalid json data", http.StatusBadRequest)
@@ -51,5 +86,7 @@ func main() {
 	fmt.Println("Starting server on localhost:8080")
 	http.HandleFunc("/hello", itsrunninhhandler)
 	http.HandleFunc("/reservation", getReservationsHandler)
+	http.HandleFunc("/reserve", addReservstionHandler)
+	http.HandleFunc("/delete", deleteReservationHandler)
 	http.ListenAndServe(":8080", nil)
 }
